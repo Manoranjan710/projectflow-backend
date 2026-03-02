@@ -13,12 +13,18 @@ app.use(cors(
 
 app.use(express.json());
 
-app.get('/health', (req, res)=>{
-    res.status(200).json({
-        success:true,
-        message:"Server is healthy"
-    });
-})
+const authRoutes = require('./src/routes/auth.routes');
+app.use('/api/v1/auth', authRoutes);
+
+app.use((err, req, res, next) => {
+  const status = err.status || 500;
+
+  res.status(status).json({
+    success: false,
+    error: err.message || "Internal Server Error"
+  });
+});
+
 
 const PORT = process.env.PORT || 5000;
 
