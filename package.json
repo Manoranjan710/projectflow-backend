@@ -3,10 +3,11 @@
   "version": "1.0.0",
   "description": "��#\u0000 \u0000p\u0000r\u0000o\u0000j\u0000e\u0000c\u0000t\u0000f\u0000l\u0000o\u0000w\u0000-\u0000b\u0000a\u0000c\u0000k\u0000e\u0000n\u0000d\u0000\r\u0000 \u0000",
   "main": "index.js",
- "scripts": {
-  "dev": "nodemon app.js",
-  "start": "node app.js"
-},
+  "scripts": {
+    "dev": "nodemon app.js",
+    "start": "node app.js",
+     "seed:admin": "node src/utils/seedAdmin.js"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Manoranjan710/projectflow-backend.git"
@@ -20,6 +21,7 @@
   },
   "homepage": "https://github.com/Manoranjan710/projectflow-backend#readme",
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",

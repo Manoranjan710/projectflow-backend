@@ -1,0 +1,8 @@
+const express = require('express');
+const router = express.Router();
+const projectController = require('../controllers/project.controller');
+const {verifyToken} = require('../middlewares/auth.middleware');
+
+router.post('/', verifyToken, projectController.createProject);
+router.get('/my-projects', verifyToken, projectController.getMyProjects);
+module.exports = router;

@@ -2,12 +2,13 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const {v4: uuidv4} = require('uuid');
 const userRepository = require('../repositories/user.repository');
+const AppError = require('../utils/AppError');
 
 exports.register = async({name, email, password}) => {
     const existingUser = await userRepository.findByEmail(email);
 
     if(existingUser){
-        throw{status:400, message:"Email already in use"};
+        throw new AppError(400, "Email already in use");
     }
 
     hashedPassword = await bcrypt.hash(password, 10);
@@ -28,13 +29,13 @@ exports.login = async({email, password}) => {
     const user = await userRepository.findByEmail(email);
 
     if(!user){
-        throw{status:401, message:"Invalid email or password"};
+        throw new AppError(401, "Invalid email or password");
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
 
     if(!isMatch){
-        throw{status:401, message:"Invalid email or password"};
+        throw new AppError(401, "Invalid email or password");
     }
 
     const token = jwt.sign(
