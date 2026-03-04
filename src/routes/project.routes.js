@@ -4,5 +4,15 @@ const projectController = require('../controllers/project.controller');
 const {verifyToken} = require('../middlewares/auth.middleware');
 
 router.post('/', verifyToken, projectController.createProject);
-router.get('/my-projects', verifyToken, projectController.getMyProjects);
+router.get("/", verifyToken, projectController.getProjects);
+router.post(
+  "/:projectId/members",
+  verifyToken,
+  projectController.addMember
+);
+router.get(
+  "/:projectId/available-users",
+  verifyToken,
+  projectController.getAvailableUsers
+);
 module.exports = router;

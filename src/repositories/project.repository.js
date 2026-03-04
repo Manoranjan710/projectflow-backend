@@ -30,3 +30,75 @@ exports.getProjectsByUser = async(userId) => {
     const [rows] = await pool.execute(query, [userId]);
     return rows;
 };
+
+exports.getAllProjects = async ({ status, search, limit = 10, offset = 0 }) => {
+
+  let query = `
+    SELECT *
+    FROM projects
+    WHERE deleted_at IS NULL
+  `;
+
+  const values = [];
+
+  if (status) {
+    query += " AND status = ?";
+    values.push(status);
+  }
+
+  if (search) {
+    query += " AND title LIKE ?";
+    values.push(`%${search}%`);
+  }
+
+  query += ` ORDER BY created_at DESC LIMIT ${offset}, ${limit}`;
+
+  const [rows] = await pool.execute(query, values);
+
+  return rows;
+};
+
+
+exports.countAllProjects = async ({ status, search }) => {
+
+  let query = `
+    SELECT COUNT(*) as total
+    FROM projects
+    WHERE deleted_at IS NULL
+  `;
+
+  const values = [];
+
+  if (status) {
+    query += " AND status = ?";
+    values.push(status);
+  }
+
+  if (search) {
+    query += " AND title LIKE ?";
+    values.push(`%${search}%`);
+  }
+
+  const [rows] = await pool.execute(query, values);
+
+  return rows[0].total;
+};
+
+exports.getAvailableUsers = async (projectId) => {
+
+  const query = `
+    SELECT u.id, u.name, u.email
+    FROM users u
+    WHERE u.deleted_at IS NULL
+    AND u.id NOT IN (
+      SELECT user_id
+      FROM project_members
+      WHERE project_id = ?
+    )
+  `;
+
+  const [rows] = await pool.execute(query, [projectId]);
+
+  return rows;
+};
+
