@@ -102,3 +102,13 @@ exports.getAvailableUsers = async (projectId) => {
   return rows;
 };
 
+exports.getProjectMembers = async (projectId) => {
+    const query = `
+    SELECT u.id, u.name, u.email
+    FROM users u
+    JOIN project_members pm ON u.id = pm.user_id
+    WHERE pm.project_id = ? AND u.deleted_at IS NULL`;
+
+    const [rows] = await pool.execute(query, [projectId]);
+    return rows;
+}

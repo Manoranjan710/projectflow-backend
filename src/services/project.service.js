@@ -105,3 +105,10 @@ exports.getAvailableUsers = async (projectId, user) => {
 
   return users;
 };
+
+exports.getProjectMembers = async (projectId, user) => {
+  
+  const members = await projectRepository.getProjectMembers(projectId);
+
+  return members;
+};

@@ -15,4 +15,10 @@ router.get(
   verifyToken,
   projectController.getAvailableUsers
 );
+router.get(
+  "/:projectId/members",
+  verifyToken,
+  projectController.getProjectMembers
+);
+
 module.exports = router;

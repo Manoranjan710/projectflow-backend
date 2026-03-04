@@ -63,3 +63,19 @@ exports.getAvailableUsers = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.getProjectMembers = async (req, res, next) => {
+    try {       
+        const members = await projectService.getProjectMembers(
+            req.params.projectId,
+            req.user
+        );
+
+        res.status(200).json({
+            success: true,
+            data: members
+        }); 
+    } catch (error) {
+        next(error);
+    }
+};
