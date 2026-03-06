@@ -22,9 +22,10 @@ exports.addProjectMember = async(member) => {
 
 exports.getProjectsByUser = async(userId) => {
     const query =`
-    SELECT p.*
+    SELECT p.id, p.title, p.description, p.status, p.created_at, p.deleted_at, u.name as created_by
     FROM projects p
     JOIN project_members pm ON p.id = pm.project_id
+    JOIN users u ON p.created_by = u.id
     WHERE pm.user_id = ? AND p.deleted_at IS NULL`;
 
     const [rows] = await pool.execute(query, [userId]);
@@ -34,24 +35,25 @@ exports.getProjectsByUser = async(userId) => {
 exports.getAllProjects = async ({ status, search, limit = 10, offset = 0 }) => {
 
   let query = `
-    SELECT *
-    FROM projects
-    WHERE deleted_at IS NULL
+    SELECT p.id, p.title, p.description, p.status, p.created_at, p.deleted_at, u.name as created_by
+    FROM projects p
+    JOIN users u ON p.created_by = u.id
+    WHERE p.deleted_at IS NULL
   `;
 
   const values = [];
 
   if (status) {
-    query += " AND status = ?";
+    query += " AND p.status = ?";
     values.push(status);
   }
 
   if (search) {
-    query += " AND title LIKE ?";
+    query += " AND p.title LIKE ?";
     values.push(`%${search}%`);
   }
 
-  query += ` ORDER BY created_at DESC LIMIT ${offset}, ${limit}`;
+  query += ` ORDER BY p.created_at DESC LIMIT ${limit} OFFSET ${offset}`;
 
   const [rows] = await pool.execute(query, values);
 
@@ -100,6 +102,61 @@ exports.getAvailableUsers = async (projectId) => {
   const [rows] = await pool.execute(query, [projectId]);
 
   return rows;
+};
+
+exports.getFilteredProjects = async ({ userId, status, search, limit = 10, offset = 0 }) => {
+
+  let query = `
+    SELECT p.id, p.title, p.description, p.status, p.created_at, p.deleted_at, u.name as created_by
+    FROM projects p
+    JOIN project_members pm ON p.id = pm.project_id
+    JOIN users u ON p.created_by = u.id
+    WHERE pm.user_id = ? AND p.deleted_at IS NULL
+  `;
+
+  const values = [userId];
+
+  if (status) {
+    query += " AND p.status = ?";
+    values.push(status);
+  }
+
+  if (search) {
+    query += " AND p.title LIKE ?";
+    values.push(`%${search}%`);
+  }
+
+  query += ` ORDER BY p.created_at DESC LIMIT ${limit} OFFSET ${offset}`;
+
+  const [rows] = await pool.execute(query, values);
+
+  return rows;
+};
+
+exports.countFilteredProjects = async ({ userId, status, search }) => {
+
+  let query = `
+    SELECT COUNT(*) as total
+    FROM projects p
+    JOIN project_members pm ON p.id = pm.project_id
+    WHERE pm.user_id = ? AND p.deleted_at IS NULL
+  `;
+
+  const values = [userId];
+
+  if (status) {
+    query += " AND p.status = ?";
+    values.push(status);
+  }
+
+  if (search) {
+    query += " AND p.title LIKE ?";
+    values.push(`%${search}%`);
+  }
+
+  const [rows] = await pool.execute(query, values);
+
+  return rows[0].total;
 };
 
 exports.getProjectMembers = async (projectId) => {
