@@ -21,4 +21,10 @@ router.get(
   projectController.getProjectMembers
 );
 
+router.get(
+  "/:projectId",
+  verifyToken,
+  projectController.getProjectDetails
+);
+
 module.exports = router;

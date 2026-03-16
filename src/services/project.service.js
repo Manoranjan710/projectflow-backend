@@ -112,3 +112,23 @@ exports.getProjectMembers = async (projectId, user) => {
 
   return members;
 };
+
+exports.getProjectDetails = async (projectId, user) => {
+
+  const project = await projectRepository.getProjectById(
+    projectId,
+    user.id,
+    user.role
+  );
+
+  if (!project) {
+    throw new AppError(403, "You are not allowed to access this project");
+  }
+
+  const members = await projectRepository.getProjectMembers(projectId);
+
+  return {
+    project,
+    members
+  };
+};

@@ -79,3 +79,22 @@ exports.getProjectMembers = async (req, res, next) => {
         next(error);
     }
 };
+
+exports.getProjectDetails = async (req, res, next) => {
+
+  try {
+
+    const result = await projectService.getProjectDetails(
+      req.params.projectId,
+      req.user
+    );
+
+    res.status(200).json({
+      success: true,
+      data: result
+    });
+
+  } catch (error) {
+    next(error);
+  }
+};

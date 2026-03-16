@@ -169,3 +169,54 @@ exports.getProjectMembers = async (projectId) => {
     const [rows] = await pool.execute(query, [projectId]);
     return rows;
 }
+
+exports.getProjectById = async (projectId, userId, role) => {
+
+  let query;
+  let values;
+
+  if (role === "ADMIN") {
+
+    query = `
+      SELECT *
+      FROM projects
+      WHERE id = ? AND deleted_at IS NULL
+    `;
+
+    values = [projectId];
+
+  } else {
+
+    query = `
+      SELECT p.*
+      FROM projects p
+      JOIN project_members pm
+        ON p.id = pm.project_id
+      WHERE p.id = ?
+      AND pm.user_id = ?
+      AND p.deleted_at IS NULL
+    `;
+
+    values = [projectId, userId];
+
+  }
+
+  const [rows] = await pool.execute(query, values);
+
+  return rows[0];
+};
+
+exports.getProjectMembers = async (projectId) => {
+
+  const query = `
+    SELECT u.id, u.name, u.email
+    FROM users u
+    JOIN project_members pm
+      ON u.id = pm.user_id
+    WHERE pm.project_id = ?
+  `;
+
+  const [rows] = await pool.execute(query, [projectId]);
+
+  return rows;
+};
