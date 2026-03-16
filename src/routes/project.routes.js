@@ -27,4 +27,10 @@ router.get(
   projectController.getProjectDetails
 );
 
+router.delete(
+  "/:projectId/members/:userId",
+  verifyToken,
+  projectController.removeMember
+);
+
 module.exports = router;

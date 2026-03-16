@@ -132,3 +132,12 @@ exports.getProjectDetails = async (projectId, user) => {
     members
   };
 };
+
+exports.removeMember = async (projectId, userId, user) => {
+
+  if (user.role !== "ADMIN") {
+    throw new AppError(403, "Only admin can remove members");
+  }
+
+  await projectRepository.removeProjectMember(projectId, userId);
+};

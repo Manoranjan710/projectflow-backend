@@ -220,3 +220,13 @@ exports.getProjectMembers = async (projectId) => {
 
   return rows;
 };
+
+exports.removeProjectMember = async (projectId, userId) => {
+
+  const query = `
+    DELETE FROM project_members
+    WHERE project_id = ? AND user_id = ?
+  `;
+
+  await pool.execute(query, [projectId, userId]);
+};

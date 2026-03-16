@@ -98,3 +98,23 @@ exports.getProjectDetails = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.removeMember = async (req, res, next) => {
+
+  try {
+
+    await projectService.removeMember(
+      req.params.projectId,
+      req.params.userId,
+      req.user
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Member removed successfully"
+    });
+
+  } catch (error) {
+    next(error);
+  }
+};
