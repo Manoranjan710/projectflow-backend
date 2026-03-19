@@ -48,6 +48,34 @@ app.use((err, req, res, next) => {
     console.error("[error]", err);
   }
 
+  const responseStatus = err?.response?.status;
+  const responseData = err?.response?.data;
+  const responseText = err?.response?.statusText;
+  const errData = err?.data;
+
+  const causeResponseStatus = err?.cause?.response?.status;
+  const causeResponseData = err?.cause?.response?.data;
+  const causeResponseText = err?.cause?.response?.statusText;
+  const causeErrData = err?.cause?.data;
+
+  if (message === "Bad Request") {
+    const upstreamMessage =
+      responseData?.message ||
+      responseData?.error ||
+      responseData?.status?.error ||
+      causeResponseData?.message ||
+      causeResponseData?.error ||
+      causeResponseData?.status?.error ||
+      errData?.message ||
+      errData?.error ||
+      causeErrData?.message ||
+      causeErrData?.error;
+
+    if (typeof upstreamMessage === "string" && upstreamMessage.trim()) {
+      message = upstreamMessage;
+    }
+  }
+
   res.status(status).json({
     success: false,
     message,
@@ -61,6 +89,14 @@ app.use((err, req, res, next) => {
             statusCode: err.statusCode,
             httpStatusCode: err.httpStatusCode,
             cause: err.cause?.message,
+            responseStatus,
+            responseText,
+            responseData,
+            errData,
+            causeResponseStatus,
+            causeResponseText,
+            causeResponseData,
+            causeErrData,
           },
         }
       : null),
