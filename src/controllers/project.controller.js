@@ -1,8 +1,34 @@
 const projectService = require("../services/project.service");
 const AppError = require("../utils/AppError");
-const pdfParse = require("pdf-parse");
-const { chunkText, generateEmbedding } = require("../ai/embedding.service");
+const { PDFParse } = require("pdf-parse");
+const { chunkText, generateEmbeddings } = require("../ai/embedding.service");
 const { storeVectors } = require("../ai/vector.service");
+const { askQuestion } = require("../ai/rag.service");
+
+
+exports.askProjectQuestion = async (req, res, next) => {
+  try {
+    const { projectId } = req.params;
+    const { question } = req.body;
+
+    if(!question){
+      throw new AppError(400, "Question is required");
+    }
+
+    const answer = await askQuestion(projectId, question);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        answer
+      }
+    });
+
+  }catch (error) {
+    next(error);
+  }
+};
+
 
 exports.uploadDocument = async (req, res, next) => {
 
@@ -15,20 +41,30 @@ exports.uploadDocument = async (req, res, next) => {
     }
 
     // 1. Extract text
-    const pdfData = await pdfParse(req.file.buffer);
-    const text = pdfData.text;
+    const parser = new PDFParse({ data: req.file.buffer });
+    let text = "";
+    try {
+      const pdfData = await parser.getText();
+      text = pdfData?.text || "";
+    } finally {
+      await parser.destroy();
+    }
+
+    if (!text.trim()) {
+      throw new AppError(400, "No text could be extracted from this PDF");
+    }
 
     // 2. Chunk text
     const chunks = chunkText(text);
 
-    // 3. Generate embeddings
-    const embeddings = [];
+    // // 3. Generate embeddings
+    // const embeddings = [];
 
-    for (const chunk of chunks) {
-      const embedding = await generateEmbedding(chunk);
-      embeddings.push(embedding);
-    }
-
+    // for (const chunk of chunks) {
+    //   const embedding = await generateEmbedding(chunk);
+    //   embeddings.push(embedding);
+    // }
+    const embeddings = await generateEmbeddings(chunks);
     // 4. Store in Qdrant
     await storeVectors(projectId, chunks, embeddings);
 

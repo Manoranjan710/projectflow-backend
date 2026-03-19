@@ -4,13 +4,14 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-exports.generateEmbedding = async (text) => {
+exports.generateEmbeddings = async (chunks) => {
+
   const response = await openai.embeddings.create({
     model: "text-embedding-3-small",
-    input: text,
+    input: chunks   // 👈 array instead of single text
   });
 
-  return response.data[0].embedding;
+  return response.data.map(item => item.embedding);
 };
 
 exports.chunkText = (text, chunkSize = 500, overlap = 100 ) => {

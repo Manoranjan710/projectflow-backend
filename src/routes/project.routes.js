@@ -35,6 +35,12 @@ router.post(
   projectController.uploadDocument
 )
 
+router.post(
+  "/:projectId/ask",
+  verifyToken,
+  projectController.askProjectQuestion
+);
+
 router.get(
   "/:projectId",
   verifyToken,
