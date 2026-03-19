@@ -4,6 +4,17 @@ const projectController = require('../controllers/project.controller');
 const {verifyToken} = require('../middlewares/auth.middleware');
 const upload = require('../middlewares/upload.middleware');
 
+const debugUploadRequest = (req, res, next) => {
+  if (process.env.DEBUG_PDF_UPLOAD !== "true") return next();
+
+  console.log("[documents] headers:", {
+    "content-type": req.headers["content-type"],
+    "content-length": req.headers["content-length"],
+  });
+
+  next();
+};
+
 router.post('/', verifyToken, projectController.createProject);
 router.get("/", verifyToken, projectController.getProjects);
 router.post(
@@ -31,7 +42,12 @@ router.delete(
 router.post(
   "/:projectId/documents",
   verifyToken,
-  upload.single('file'),
+  debugUploadRequest,
+  upload.fields([
+    { name: "file", maxCount: 1 },
+    { name: "pdf", maxCount: 1 },
+    { name: "document", maxCount: 1 },
+  ]),
   projectController.uploadDocument
 )
 

@@ -1,13 +1,15 @@
 const client = require("../config/qdrant");
+const { v4: uuidv4 } = require("uuid");
 
 exports.storeVectors = async (projectId, chunks, embeddings) => {
 
   const points = chunks.map((chunk, index) => ({
-    id: `${projectId}-${index}-${Date.now()}`,
+    id: uuidv4(),
     vector: embeddings[index],
     payload: {
       project_id: projectId,
-      text: chunk
+      chunk_index: index,
+      text: chunk,
     }
   }));
 

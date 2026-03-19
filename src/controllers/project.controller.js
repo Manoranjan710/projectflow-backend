@@ -36,13 +36,40 @@ exports.uploadDocument = async (req, res, next) => {
 
     const { projectId } = req.params;
 
-    if (!req.file) {
-      throw new AppError(400, "File is required");
+    const uploadedFile =
+      req.file ||
+      req.files?.file?.[0] ||
+      req.files?.pdf?.[0] ||
+      req.files?.document?.[0];
+
+    if (!uploadedFile) {
+      throw new AppError(
+        400,
+        "File is required (multipart/form-data field name: file)",
+      );
+    }
+
+    const isPdf =
+      (uploadedFile.mimetype || "").toLowerCase().includes("pdf") ||
+      (uploadedFile.originalname || "").toLowerCase().endsWith(".pdf");
+
+    if (!isPdf) {
+      throw new AppError(400, "Only PDF files are allowed");
+    }
+
+    if (process.env.DEBUG_PDF_UPLOAD === "true") {
+      console.log("[uploadDocument] file:", {
+        fieldname: uploadedFile.fieldname,
+        originalname: uploadedFile.originalname,
+        mimetype: uploadedFile.mimetype,
+        size: uploadedFile.size,
+      });
     }
 
     // 1. Extract text
-    const parser = new PDFParse({ data: req.file.buffer });
+    const parser = new PDFParse({ data: uploadedFile.buffer });
     let text = "";
+
     try {
       const pdfData = await parser.getText();
       text = pdfData?.text || "";
@@ -54,8 +81,16 @@ exports.uploadDocument = async (req, res, next) => {
       throw new AppError(400, "No text could be extracted from this PDF");
     }
 
+    if (process.env.DEBUG_PDF_UPLOAD === "true") {
+      console.log("[uploadDocument] text extracted:", { textLength: text.length });
+    }
+
     // 2. Chunk text
     const chunks = chunkText(text);
+
+    if (process.env.DEBUG_PDF_UPLOAD === "true") {
+      console.log("[uploadDocument] chunked:", { chunks: chunks.length });
+    }
 
     // // 3. Generate embeddings
     // const embeddings = [];
@@ -66,7 +101,18 @@ exports.uploadDocument = async (req, res, next) => {
     // }
     const embeddings = await generateEmbeddings(chunks);
     // 4. Store in Qdrant
+    if (process.env.DEBUG_PDF_UPLOAD === "true") {
+      console.log("[uploadDocument] embeddings:", { vectors: embeddings.length });
+    }
+
     await storeVectors(projectId, chunks, embeddings);
+
+    if (process.env.DEBUG_PDF_UPLOAD === "true") {
+      console.log("[uploadDocument] extracted:", {
+        textLength: text.length,
+        chunks: chunks.length,
+      });
+    }
 
     res.status(200).json({
       success: true,
