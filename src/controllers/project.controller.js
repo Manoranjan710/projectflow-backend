@@ -1,31 +1,45 @@
 const projectService = require("../services/project.service");
 const AppError = require("../utils/AppError");
-const { PDFParse } = require("pdf-parse");
+const pdfParse = require("pdf-parse");
+const { chunkText, generateEmbedding } = require("../ai/embedding.service");
+const { storeVectors } = require("../ai/vector.service");
 
 exports.uploadDocument = async (req, res, next) => {
+
   try {
+
     const { projectId } = req.params;
+
     if (!req.file) {
       throw new AppError(400, "File is required");
     }
 
-    const parser = new PDFParse({ data: req.file.buffer });
-    let text = "";
-    try {
-      const result = await parser.getText();
-      text = result?.text || "";
-    } finally {
-      await parser.destroy();
+    // 1. Extract text
+    const pdfData = await pdfParse(req.file.buffer);
+    const text = pdfData.text;
+
+    // 2. Chunk text
+    const chunks = chunkText(text);
+
+    // 3. Generate embeddings
+    const embeddings = [];
+
+    for (const chunk of chunks) {
+      const embedding = await generateEmbedding(chunk);
+      embeddings.push(embedding);
     }
+
+    // 4. Store in Qdrant
+    await storeVectors(projectId, chunks, embeddings);
 
     res.status(200).json({
       success: true,
-      message: "Document uploaded successfully",
+      message: "Document processed and stored successfully",
       data: {
-        projectId,
-        textLength: text.length,
-      },
+        chunks: chunks.length
+      }
     });
+
   } catch (error) {
     next(error);
   }
