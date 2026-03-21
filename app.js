@@ -21,12 +21,11 @@ const projectRoutes = require("./src/routes/project.routes");
 app.use("/api/v1/projects", projectRoutes);
 
 app.use((err, req, res, next) => {
-  let status = err.status || 500;
-  let message = err.message || "Internal Server Error";
 
-  if (err.statusCode && !err.status) status = err.statusCode;
-  if (err.httpStatusCode && !err.status && !err.statusCode)
-    status = err.httpStatusCode;
+  console.error("🔥 ERROR:", err);  // ALWAYS log
+
+  let status = err.status || err.statusCode || 500;
+  let message = err.message || "Internal Server Error";
 
   if (err instanceof multer.MulterError) {
     status = 400;
@@ -39,71 +38,11 @@ app.use((err, req, res, next) => {
     }
   }
 
-  if (message === "Bad Request" && err.cause?.message) {
-    message = err.cause.message;
-  }
-
-  const includeDetails =
-    process.env.DEBUG_ERRORS === "true" ||
-    process.env.NODE_ENV === "development";
-
-  if (includeDetails) {
-    console.error("[error]", err);
-  }
-
-  const responseStatus = err?.response?.status;
-  const responseData = err?.response?.data;
-  const responseText = err?.response?.statusText;
-  const errData = err?.data;
-
-  const causeResponseStatus = err?.cause?.response?.status;
-  const causeResponseData = err?.cause?.response?.data;
-  const causeResponseText = err?.cause?.response?.statusText;
-  const causeErrData = err?.cause?.data;
-
-  if (message === "Bad Request") {
-    const upstreamMessage =
-      responseData?.message ||
-      responseData?.error ||
-      responseData?.status?.error ||
-      causeResponseData?.message ||
-      causeResponseData?.error ||
-      causeResponseData?.status?.error ||
-      errData?.message ||
-      errData?.error ||
-      causeErrData?.message ||
-      causeErrData?.error;
-
-    if (typeof upstreamMessage === "string" && upstreamMessage.trim()) {
-      message = upstreamMessage;
-    }
-  }
-
   res.status(status).json({
     success: false,
-    message,
-    ...(includeDetails
-      ? {
-          details: {
-            name: err.name,
-            code: err.code,
-            type: err.type,
-            status,
-            statusCode: err.statusCode,
-            httpStatusCode: err.httpStatusCode,
-            cause: err.cause?.message,
-            responseStatus,
-            responseText,
-            responseData,
-            errData,
-            causeResponseStatus,
-            causeResponseText,
-            causeResponseData,
-            causeErrData,
-          },
-        }
-      : null),
+    message
   });
+
 });
 
 app.get("/health", (req, res) => {
