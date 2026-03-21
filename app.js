@@ -5,17 +5,17 @@ const multer = require("multer");
 
 const app = express();
 
-app.use(cors(
-    {
-        origin:process.env.FRONTEND_URL,
-        credentials:true
-    }
-));
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL,
+    credentials: true,
+  }),
+);
 
 app.use(express.json());
 
-const authRoutes = require('./src/routes/auth.routes');
-app.use('/api/v1/auth', authRoutes);
+const authRoutes = require("./src/routes/auth.routes");
+app.use("/api/v1/auth", authRoutes);
 
 const projectRoutes = require("./src/routes/project.routes");
 app.use("/api/v1/projects", projectRoutes);
@@ -25,7 +25,8 @@ app.use((err, req, res, next) => {
   let message = err.message || "Internal Server Error";
 
   if (err.statusCode && !err.status) status = err.statusCode;
-  if (err.httpStatusCode && !err.status && !err.statusCode) status = err.httpStatusCode;
+  if (err.httpStatusCode && !err.status && !err.statusCode)
+    status = err.httpStatusCode;
 
   if (err instanceof multer.MulterError) {
     status = 400;
@@ -33,7 +34,8 @@ app.use((err, req, res, next) => {
     if (err.code === "LIMIT_FILE_SIZE") {
       message = "File too large. Max size is 5MB.";
     } else if (err.code === "LIMIT_UNEXPECTED_FILE") {
-      message = "Unexpected file field. Use multipart/form-data field name: file.";
+      message =
+        "Unexpected file field. Use multipart/form-data field name: file.";
     }
   }
 
@@ -42,7 +44,8 @@ app.use((err, req, res, next) => {
   }
 
   const includeDetails =
-    process.env.DEBUG_ERRORS === "true" || process.env.NODE_ENV === "development";
+    process.env.DEBUG_ERRORS === "true" ||
+    process.env.NODE_ENV === "development";
 
   if (includeDetails) {
     console.error("[error]", err);
@@ -103,8 +106,12 @@ app.use((err, req, res, next) => {
   });
 });
 
+app.get("/health", (req, res) => {
+  res.send("OK");
+});
+
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, ()=>{
-    console.log(`Server is running on port ${PORT}`);
-})
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
