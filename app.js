@@ -13,6 +13,9 @@ app.use(
 );
 
 app.use(express.json());
+app.use(cors({
+  origin: "*"
+}));
 
 const authRoutes = require("./src/routes/auth.routes");
 app.use("/api/v1/auth", authRoutes);
