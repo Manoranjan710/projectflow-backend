@@ -151,3 +151,31 @@ exports.removeMember = async (projectId, userId, user) => {
 
   await projectRepository.removeProjectMember(projectId, userId);
 };
+
+exports.updateProject = async (projectId, payload, user) => {
+
+  if (user.role !== "ADMIN") {
+    throw new AppError(403, "Only ADMIN can update projects");
+  }
+
+  const { title, name, description, status } = payload || {};
+
+  const updates = {};
+  const resolvedTitle = title ?? name;
+
+  if (resolvedTitle !== undefined) updates.title = resolvedTitle;
+  if (description !== undefined) updates.description = description;
+  if (status !== undefined) updates.status = status;
+
+  if (!Object.keys(updates).length) {
+    throw new AppError(400, "Provide at least one of: title/name, description, status");
+  }
+
+  const result = await projectRepository.updateProject(projectId, updates);
+
+  if (!result || result.affectedRows === 0) {
+    throw new AppError(404, "Project not found");
+  }
+
+  return { message: "Project updated successfully" };
+};

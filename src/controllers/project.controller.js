@@ -248,3 +248,21 @@ exports.removeMember = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.updateProject = async (req, res, next) => {
+  try {
+    const result = await projectService.updateProject(
+      req.params.projectId,
+      req.body,
+      req.user,
+    );
+
+    res.status(200).json({
+      success: true,
+      data: null,
+      message: result.message,
+    });
+  } catch (error) {
+    next(error);
+  }
+};

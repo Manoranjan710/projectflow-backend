@@ -10,6 +10,33 @@ exports.createProject = async(project)=>{
     await pool.execute(query, [id, title, description, created_by]);
 };
 
+exports.updateProject = async(projectId, updates) => {
+    const allowedFields = new Set(["title", "description", "status"]);
+
+    const fields = [];
+    const values = [];
+
+    for (const [key, value] of Object.entries(updates || {})) {
+        if (!allowedFields.has(key)) continue;
+        fields.push(`${key} = ?`);
+        values.push(value);
+    }
+
+    if (!fields.length) {
+        return { affectedRows: 0 };
+    }
+
+    values.push(projectId);
+
+    const query = `
+    UPDATE projects
+    SET ${fields.join(", ")}
+    WHERE id = ? AND deleted_at IS NULL`;
+
+    const [result] = await pool.execute(query, values);
+    return result;
+};  
+
 exports.deleteProject = async(projectId) => {
     const query = `
     UPDATE projects
