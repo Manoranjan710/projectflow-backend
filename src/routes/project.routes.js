@@ -16,6 +16,7 @@ const debugUploadRequest = (req, res, next) => {
 };
 
 router.post('/', verifyToken, projectController.createProject);
+router.delete('/:projectId', verifyToken, projectController.deleteProject);
 router.get("/", verifyToken, projectController.getProjects);
 router.post(
   "/:projectId/members",

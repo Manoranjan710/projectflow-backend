@@ -140,6 +140,19 @@ exports.createProject = async (req, res, next) => {
   }
 };
 
+exports.deleteProject = async (req, res, next) => {
+  try {
+    const result = await projectService.deleteProject(req.params.projectId, req.user);
+    res.status(200).json({
+      success: true,
+      data: null,
+      message: result.message,
+    });
+  } catch (err) {
+    next(err);
+  } 
+};
+
 exports.getProjects = async (req, res, next) => {
   try {
     const result = await projectService.getProjects(req.query, req.user);

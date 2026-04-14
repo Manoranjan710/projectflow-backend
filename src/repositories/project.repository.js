@@ -10,6 +10,15 @@ exports.createProject = async(project)=>{
     await pool.execute(query, [id, title, description, created_by]);
 };
 
+exports.deleteProject = async(projectId) => {
+    const query = `
+    UPDATE projects
+    SET deleted_at = NOW()
+    WHERE id = ? AND deleted_at IS NULL`;
+
+    await pool.execute(query, [projectId]);
+};
+
 exports.addProjectMember = async(member) => {
     const {id, project_id,  user_id} = member;
 

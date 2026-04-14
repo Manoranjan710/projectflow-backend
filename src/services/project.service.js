@@ -25,6 +25,16 @@ exports.createProject = async ({ title, description }, user) => {
   return { message: "Project created successfully" };
 };
 
+exports.deleteProject = async (projectId, user) => {
+
+  if (user.role !== "ADMIN") {
+    throw new AppError(403, "Only ADMIN can delete projects");
+  }
+
+  await projectRepository.deleteProject(projectId);
+  return { message: "Project deleted successfully" };
+};
+
 exports.getMyProjects = async (user) => {
   return await projectRepository.getProjectsByUser(user.id);
 };
