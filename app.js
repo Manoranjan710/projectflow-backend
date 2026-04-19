@@ -2,6 +2,11 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const multer = require("multer");
+const { connectRedis } = require("./src/config/redis");
+
+(async () => {
+  await connectRedis();
+})();
 
 const app = express();
 
