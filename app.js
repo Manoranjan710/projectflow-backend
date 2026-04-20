@@ -10,6 +10,18 @@ const { connectRedis } = require("./src/config/redis");
 
 const app = express();
 
+app.use((req, res, next) => {
+  const start = Date.now();
+
+  res.on("finish", () => {
+    const duration = Date.now() - start;
+    console.log(`${req.method} ${req.originalUrl} - ${duration}ms`);
+  });
+
+  next();
+});
+
+
 app.use(
   cors({
     origin: process.env.FRONTEND_URL,
