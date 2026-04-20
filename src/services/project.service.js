@@ -125,6 +125,10 @@ exports.addMember = async (projectId, userId, user) => {
     project_id: projectId,
     user_id: userId,
   });
+
+  // Invalidate related caches
+  await deleteCacheByPattern(`projectdetails:${projectId}:*`);
+  await deleteCacheByPattern(`availableusers:${projectId}`);
 };
 
 exports.getAvailableUsers = async (projectId, user) => {
@@ -132,7 +136,21 @@ exports.getAvailableUsers = async (projectId, user) => {
     throw new AppError(403, "Only admin can view available users");
   }
 
+  const cacheKey = `availableusers:${projectId}`;
+
+  // Check cache first
+  const cachedUsers = await getCache(cacheKey);
+  if (cachedUsers) {
+    console.log("✅ Cache hit for available users", cacheKey);
+    return cachedUsers;
+  }
+
+  console.log("Cache miss for available users, fetching from DB", cacheKey);
+
   const users = await projectRepository.getAvailableUsers(projectId);
+
+  // Cache the result for 120 seconds
+  await setCache(cacheKey, users, 120);
 
   return users;
 };
@@ -144,6 +162,17 @@ exports.getProjectMembers = async (projectId, user) => {
 };
 
 exports.getProjectDetails = async (projectId, user) => {
+  const cacheKey = `projectdetails:${projectId}:${user.id}`;
+
+  // Check cache first
+  const cachedDetails = await getCache(cacheKey);
+  if (cachedDetails) {
+    console.log("✅ Cache hit for project details", cacheKey);
+    return cachedDetails;
+  }
+
+  console.log("Cache miss for project details, fetching from DB", cacheKey);
+
   const project = await projectRepository.getProjectById(
     projectId,
     user.id,
@@ -156,10 +185,15 @@ exports.getProjectDetails = async (projectId, user) => {
 
   const members = await projectRepository.getProjectMembers(projectId);
 
-  return {
+  const responseToCache = {
     project,
     members,
   };
+
+  // Cache the result for 120 seconds
+  await setCache(cacheKey, responseToCache, 120);
+
+  return responseToCache;
 };
 
 exports.removeMember = async (projectId, userId, user) => {
@@ -168,6 +202,10 @@ exports.removeMember = async (projectId, userId, user) => {
   }
 
   await projectRepository.removeProjectMember(projectId, userId);
+
+  // Invalidate related caches
+  await deleteCacheByPattern(`projectdetails:${projectId}:*`);
+  await deleteCacheByPattern(`availableusers:${projectId}`);
 };
 
 exports.updateProject = async (projectId, payload, user) => {
@@ -197,6 +235,9 @@ exports.updateProject = async (projectId, payload, user) => {
     throw new AppError(404, "Project not found");
   }
 
+  // Invalidate all related caches
   await deleteCacheByPattern("projects:list:*");
+  await deleteCacheByPattern(`projectdetails:${projectId}:*`);
+  await deleteCacheByPattern(`availableusers:${projectId}`);
   return { message: "Project updated successfully" };
 };

@@ -11,7 +11,7 @@ const getCache = async (key) => {
   }
 };
 
-const setCache = async (key, value, ttl = 60) => {
+const setCache = async (key, value, ttl = 300) => {
   try {
     if (!redisClient.isOpen) return;
     await redisClient.setEx(key, ttl, JSON.stringify(value));
